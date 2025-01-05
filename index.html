@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Sharing Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.2.47/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+        }
+        header h1 {
+            margin: 0;
+        }
+        header button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        header button:hover {
+            background-color: #45a049;
+        }
+        .book-list {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+        }
+        .book {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px;
+            padding: 10px;
+            width: calc(33.333% - 20px);
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .book img {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        .book-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .book-author {
+            font-size: 14px;
+            color: #555;
+        }
+        .center {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div v-if="!loggedIn" class="center">
+            <h1>Enter Your Nickname</h1>
+            <input type="text" v-model="nickname" placeholder="Your nickname">
+            <button @click="login">Login</button>
+        </div>
+
+        <div v-else>
+            <header>
+                <h1>Welcome, {{ nickname }}</h1>
+                <button @click="goToAddBook">+</button>
+            </header>
+
+            <div class="book-list">
+                <div class="book" v-for="(book, index) in books" :key="index" @click="viewBook(book)">
+                    <img :src="book.cover" alt="Book Cover">
+                    <div class="book-title">{{ book.title }}</div>
+                    <div class="book-author">By: {{ book.author }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    loggedIn: false,
+                    nickname: '',
+                    books: []
+                };
+            },
+            created() {
+                // Fetch books from server when the app is created
+                fetch('https://example.com/api/books') // Replace with your server API endpoint
+                    .then(response => response.json())
+                    .then(data => {
+                        this.books = data;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching books:', error);
+                    });
+            },
+            methods: {
+                login() {
+                    if (this.nickname.trim()) {
+                        this.loggedIn = true;
+                    } else {
+                        alert('Please enter a valid nickname.');
+                    }
+                },
+                goToAddBook() {
+                    const title = prompt('Enter book title:');
+                    const cover = prompt('Enter cover image URL:');
+                    const content = prompt('Enter book content (100+ characters):');
+
+                    if (title && cover && content.length >= 100) {
+                        const newBook = {
+                            title,
+                            author: this.nickname,
+                            cover,
+                            content
+                        };
+
+                        // Send the new book to the server
+                        fetch('https://example.com/api/books', { // Replace with your server API endpoint
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(newBook)
+                        })
+                        .then(response => response.json())
+                        .then(savedBook => {
+                            this.books.push(savedBook);
+                        })
+                        .catch(error => {
+                            console.error('Error saving book:', error);
+                        });
+                    } else {
+                        alert('All fields are required and content must be at least 100 characters long.');
+                    }
+                },
+                viewBook(book) {
+                    alert(`Title: ${book.title}\nAuthor: ${book.author}\nContent: ${book.content}`);
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
